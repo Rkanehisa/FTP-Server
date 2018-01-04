@@ -3,7 +3,7 @@ from ftplib import FTP
 ftp = FTP('')
 ftp.connect('localhost',1026)
 ftp.login()
-ftp.cwd('') # Colocar o diretório aqui, padrão, minha home
+ftp.cwd('') # Colocar o diretório aqui
 ftp.retrlines('LIST')
 
 
@@ -32,3 +32,7 @@ def placeFile():
     filename = 'testfile.txt'
     ftp.storbinary('STOR '+filename, open(filename, 'rb'))
     ftp.quit()
+
+def changeDirectory(directory):
+    ftp.cwd(directory)
+    ftp.retrlines('LIST')
