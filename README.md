@@ -14,6 +14,17 @@ pip install -r requirements.txt
 
 ## Tutorial
 
-TODO
+Running the server
+```
+python server.py
+```
 
-You can read more by looking at the docs!
+Running a client
+
+```{bash}
+python server.py
+```
+
+----
+
+You can read more by looking at the [docs](https://rkanehisa.github.io/FTP-Server/)!
