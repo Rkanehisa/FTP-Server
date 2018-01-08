@@ -149,15 +149,13 @@ class SendConsole(ClientPrompt):
         click.echo("Sending data....")
 
         with open(local_path, 'w') as f:
-            data = self.user.client_socket.recv(1024).decode()
-            print(data)
-            f.write(data)
+            #data = self.user.client_socket.recv(1024).decode()
+            #f.write(data)
             while True:
                 data = self.user.client_socket.recv(1024).decode()
-                print(data)
+                f.write(data)
                 if "--END--" in data:
                     break
-                f.write(data)
 
         click.echo("File {0} downloaded on {1}".format(filename, local_path))
 
