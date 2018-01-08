@@ -1,5 +1,6 @@
 import socket
 import sys
+import os
 from cmd import Cmd
 
 import click
@@ -111,12 +112,13 @@ class SendConsole(ClientPrompt):
     #     Change the shell working directory."""
     #     cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "cd", arg.strip(), 0)
     #     self.user.client_socket.send(cmd_str.encode("utf8"))
-
     #     server_response = self.user.client_socket.recv(1024).decode()
-
     #     click.echo(server_response)
 
     def do_touch(self, arg):
+        """touch filename
+        Creates an empty file with filename.
+        """
         cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "touch", arg.strip(), 0)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
@@ -125,10 +127,50 @@ class SendConsole(ClientPrompt):
         click.echo(server_response)
 
     def do_get(self, arg):
-        pass
+        filename = arg.strip()
+        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "get", filename, 0)
+        self.user.client_socket.send(cmd_str.encode("utf8"))
+
+        abs_path = os.getcwd()
+
+        local_path = os.path.join(abs_path,"test", "local",self.user.username,filename)
+
+        click.echo("Sending data....")
+
+        with open(local_path, 'w') as f:
+            data = self.user.client_socket.recv(1024).decode()
+            print(data)
+            f.write(data)
+            while True:
+                data = self.user.client_socket.recv(1024).decode()
+                print(data)
+                if "--END--" in data:
+                    break
+                f.write(data)
+
+        click.echo("File {0} downloaded on {1}".format(filename, local_path))
 
     def do_put(self, arg):
-        pass
+        filename = arg.strip()
+        abs_path = os.getcwd()
+        local_path = os.path.join(abs_path,"test", "local",self.user.username,filename)
+
+        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "put", filename, 0)
+        self.user.client_socket.send(cmd_str.encode("utf8"))
+
+        click.echo("Sending data....")
+
+        with open(local_path, 'r') as f:
+            partial_f = f.read(1024)
+            #print(partial_f)
+            self.user.client_socket.send(partial_f.encode("utf8"))
+            while partial_f:
+                partial_f = f.read(1024)
+                #print(partial_f)
+                self.user.client_socket.send(partial_f.encode("utf8"))
+        self.user.client_socket.send("--END--".encode("utf8"))
+
+        click.echo("100%!!")
 
     def do_ls(self, arg):
         """ls

@@ -5,7 +5,7 @@ from threading import Thread
 
 import click
 
-DEBUG = True
+DEBUG = False
 
 @click.command()
 @click.option('--port', default=5000, help='Defines a port for the server')
@@ -53,8 +53,11 @@ def client_thread(conn, ip, port, buffer_size=1024):
             username = client_input['user']
             abs_path = os.getcwd()
             path = os.path.join(abs_path,"test","remote",username)
+            local_path = os.path.join(abs_path,"test","local",username)
             if not os.path.exists(path):
                 os.mkdir(path)
+            if not os.path.exists(local_path):
+                os.mkdir(local_path)
             # os.chdir(path)
 
             with open(os.path.join(path,'example_quote.txt'), 'w') as  f:
@@ -83,10 +86,10 @@ def client_thread(conn, ip, port, buffer_size=1024):
             conn.send(ls_out.encode("utf8"))
 
         elif cmd == 'mkdir':
-            path_ = client_input['args'][0]
-            path_ = os.path.join(path, path_)
+            path1_ = client_input['args'][0]
+            path_ = os.path.join(path, path1_)
             os.mkdir(path_)
-            server_msg = "Path {0} created!".format(path_)
+            server_msg = "Path {0} created!".format(path1_)
             conn.send(server_msg.encode("utf8"))
 
         elif cmd == 'touch':
@@ -100,11 +103,39 @@ def client_thread(conn, ip, port, buffer_size=1024):
             server_msg = "File {0} created!".format(filename)
             conn.send(server_msg.encode("utf8"))
 
+        elif cmd == 'get':
+            filename = client_input['args'][0]
+            path_ = os.path.join(path, filename)
 
-        elif cmd == 'pwd':
-            pwd = os.getcwd()
-            path_ = os.path.join(pwd, username)
-            conn.send(pwd.encode("utf8"))
+            # conn.send("Sending {0}".format(path_).encode("utf8"))
+
+            with open(path_, 'r') as f:
+                partial_f = f.read(1024)
+                conn.send(partial_f.encode("utf8"))
+                while partial_f:
+                    partial_f = f.read(1024)
+                    conn.send(partial_f.encode("utf8"))
+            conn.send("--END--".encode("utf8"))
+
+            # server_msg = "File {0} sent!".format(filename)
+            # conn.send(server_msg.encode("utf8"))
+
+        elif cmd == 'put':
+            filename = client_input['args'][0]
+            path_ = os.path.join(path, filename)
+
+            with open(path_, 'w') as f:
+                while True:
+                    data = conn.recv(1024).decode()
+                    f.write(data)
+                    if "--END--" in data:
+                        break
+                    
+
+            click.echo("Uploaded {0}".format(filename))
+
+            # server_msg = "File {0} sent!".format(filename)
+            # conn.send(server_msg.encode("utf8"))
 
         elif cmd == 'quit':
             click.echo("{0} is requesting to quit.".format(username))
