@@ -49,3 +49,7 @@ List of valid commands inside a send nested terminal
 ```
 
 > The cd command has problemas when using it with more than one thread
+
+-----
+
+> Team Rodrigo Kanehisa (rkanehisa), Marcos Vinícios (mschonfinkel)

@@ -23,7 +23,8 @@ class ClientPrompt(Cmd):
         click.echo("Quitting the User session...")
 
         if self.user.is_auth:
-            cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "quit", 0, 0)
+            cmd_str = '({0}, {1}, {2}, {3})'.format(
+                self.user.username, "quit", 0, 0)
             self.user.client_socket.send(cmd_str.encode("utf8"))
             self.user.disconnect()
         return True
@@ -49,7 +50,8 @@ class ClientPrompt(Cmd):
 
         self.prompt = "({0}) >> ".format(self.user.username)
 
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "auth", 0, 0)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "auth", 0, 0)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
         server_response = self.user.client_socket.recv(1024).decode()
@@ -70,6 +72,8 @@ class ClientPrompt(Cmd):
         \tput [filename]
         \tls
         \tpwd
+        \cd
+        \touch [filename]
         """
         if self.user.is_auth:
             new_prompt = self.prompt + "[Send] "
@@ -77,20 +81,22 @@ class ClientPrompt(Cmd):
             next_cli.prompt = new_prompt
             next_cli.cmdloop()
         else:
-            click.echo("Please authenticate yourself\nType help or ? to list commands.\n")
+            click.echo(
+                "Please authenticate yourself\nType help or ? to list commands.\n")
 
 
 class SendConsole(ClientPrompt):
     intro = '''===================================\n'''
 
-    valid_cmds = frozenset({"ls", "get", "mv", "touch", "mkdir", "put", "pwd"})
+    valid_cmds = frozenset({"ls", "get", "mv", "touch", "mkdir", "put", "pwd", "cd"})
 
     def do_mv(self, args):
         """mv source target
         Move (rename) files
         """
         src, target = args.split()
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "mv", src, target)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "mv", src, target)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
         server_response = self.user.client_socket.recv(1024).decode()
@@ -100,26 +106,29 @@ class SendConsole(ClientPrompt):
     def do_mkdir(self, arg):
         """mkdir directory_name
         Make directories"""
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "mkdir", arg.strip(), 0)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "mkdir", arg.strip(), 0)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
         server_response = self.user.client_socket.recv(1024).decode()
 
         click.echo(server_response)
 
-    # def do_cd(self, arg):
-    #     """cd DIR
-    #     Change the shell working directory."""
-    #     cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "cd", arg.strip(), 0)
-    #     self.user.client_socket.send(cmd_str.encode("utf8"))
-    #     server_response = self.user.client_socket.recv(1024).decode()
-    #     click.echo(server_response)
+    def do_cd(self, arg):
+        """cd DIR
+        Change the shell working directory."""
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "cd", arg.strip(), 0)
+        self.user.client_socket.send(cmd_str.encode("utf8"))
+        #server_response = self.user.client_socket.recv(1024).decode()
+        #click.echo(server_response)
 
     def do_touch(self, arg):
         """touch filename
         Creates an empty file with filename.
         """
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "touch", arg.strip(), 0)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "touch", arg.strip(), 0)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
         server_response = self.user.client_socket.recv(1024).decode()
@@ -128,12 +137,14 @@ class SendConsole(ClientPrompt):
 
     def do_get(self, arg):
         filename = arg.strip()
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "get", filename, 0)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "get", filename, 0)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
         abs_path = os.getcwd()
 
-        local_path = os.path.join(abs_path,"test", "local",self.user.username,filename)
+        local_path = os.path.join(
+            abs_path, "test", "local", self.user.username, filename)
 
         click.echo("Sending data....")
 
@@ -153,20 +164,22 @@ class SendConsole(ClientPrompt):
     def do_put(self, arg):
         filename = arg.strip()
         abs_path = os.getcwd()
-        local_path = os.path.join(abs_path,"test", "local",self.user.username,filename)
+        local_path = os.path.join(
+            abs_path, "test", "local", self.user.username, filename)
 
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "put", filename, 0)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "put", filename, 0)
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
         click.echo("Sending data....")
 
         with open(local_path, 'r') as f:
             partial_f = f.read(1024)
-            #print(partial_f)
+            # print(partial_f)
             self.user.client_socket.send(partial_f.encode("utf8"))
             while partial_f:
                 partial_f = f.read(1024)
-                #print(partial_f)
+                # print(partial_f)
                 self.user.client_socket.send(partial_f.encode("utf8"))
         self.user.client_socket.send("--END--".encode("utf8"))
 
@@ -183,11 +196,11 @@ class SendConsole(ClientPrompt):
 
         click.echo(server_response)
 
-
     def do_pwd(self, arg):
         """pwd
         Prints name of current/working <remote> directory"""
-        cmd_str = '({0}, {1}, {2}, {3})'.format(self.user.username, "pwd", 0, 0)
+        cmd_str = '({0}, {1}, {2}, {3})'.format(
+            self.user.username, "pwd", 0, 0)
 
         self.user.client_socket.send(cmd_str.encode("utf8"))
 
@@ -203,6 +216,7 @@ class SendConsole(ClientPrompt):
 
 
 class User():
+
     def __init__(self):
         self.is_auth = False
 
@@ -223,7 +237,8 @@ class User():
             sys.exit()
 
         self.client_socket.send("(?, hello, 0, 0)".encode("utf8"))
-        click.echo("Connected on FTP-Server at {0}:{1}".format(self.host, self.port))
+        click.echo(
+            "Connected on FTP-Server at {0}:{1}".format(self.host, self.port))
 
     def disconnect(self):
         self.client_socket.close()

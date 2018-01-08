@@ -7,6 +7,7 @@ import click
 
 DEBUG = False
 
+
 @click.command()
 @click.option('--port', default=5000, help='Defines a port for the server')
 def main(port):
@@ -52,19 +53,20 @@ def client_thread(conn, ip, port, buffer_size=1024):
         if cmd == 'auth':
             username = client_input['user']
             abs_path = os.getcwd()
-            path = os.path.join(abs_path,"test","remote",username)
-            local_path = os.path.join(abs_path,"test","local",username)
+            path = os.path.join(abs_path, "test", "remote", username)
+            local_path = os.path.join(abs_path, "test", "local", username)
             if not os.path.exists(path):
                 os.mkdir(path)
             if not os.path.exists(local_path):
                 os.mkdir(local_path)
             # os.chdir(path)
 
-            with open(os.path.join(path,'example_quote.txt'), 'w') as  f:
+            with open(os.path.join(path, 'example_quote.txt'), 'w') as f:
                 f.write('''Midway upon the journey of our life, I found myself within a forest dark,\n
                     For the straight foreward pathway had been lost.''')
 
-            conn.send("Server: Hello {0}@{1}".format(username, path).encode('utf8'))
+            conn.send("Server: Hello {0}@{1}".format(
+                username, path).encode('utf8'))
 
         elif cmd == 'mv':
             src, target = client_input['args']
@@ -78,6 +80,13 @@ def client_thread(conn, ip, port, buffer_size=1024):
 
             server_msg = "<{0}> file renamed to <{1}>".format(src, target)
             conn.send(server_msg.encode("utf8"))
+
+        elif cmd == 'cd':
+            username = client_input['user']
+            dirname = client_input['args'][0]
+            pwd = os.getcwd()
+            path = os.path.join(pwd,"test","remote",username, dirname)
+            os.chdir(path)
 
         elif cmd == 'ls':
             ls_ = os.scandir(path)
@@ -102,6 +111,11 @@ def client_thread(conn, ip, port, buffer_size=1024):
 
             server_msg = "File {0} created!".format(filename)
             conn.send(server_msg.encode("utf8"))
+
+        elif cmd == 'pwd':
+            pwd = os.getcwd()
+            path_ = os.path.join(pwd, username)
+            conn.send(pwd.encode("utf8"))
 
         elif cmd == 'get':
             filename = client_input['args'][0]
@@ -142,6 +156,7 @@ def client_thread(conn, ip, port, buffer_size=1024):
             conn.close()
             click.echo("{0} quited.".format(username))
 
+
 def rcv_cmd(conn, buffer_size):
     client_input = conn.recv(buffer_size)
     # client_input_size = sys.getsizeof(client_input)
@@ -153,13 +168,15 @@ def rcv_cmd(conn, buffer_size):
 
     return parsed_input
 
+
 def parse_string(user_input):
     input_tuple = user_input[1:-1].replace(' ', '').split(',')
 
     if DEBUG:
         click.echo(str(input_tuple))
 
-    input_dict = {'user':input_tuple[0], 'cmd': input_tuple[1], 'args': input_tuple[2:]}
+    input_dict = {'user': input_tuple[
+        0], 'cmd': input_tuple[1], 'args': input_tuple[2:]}
 
     if DEBUG:
         click.echo(str(input_dict))
