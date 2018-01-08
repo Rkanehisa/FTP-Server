@@ -130,7 +130,6 @@ def client_thread(conn, ip, port, buffer_size=1024):
                     f.write(data)
                     if "--END--" in data:
                         break
-                    
 
             click.echo("Uploaded {0}".format(filename))
 
